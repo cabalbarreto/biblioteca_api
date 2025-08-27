@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca API</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-8 font-sans">
+    <div class="max-w-4xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold mb-6 text-center">Gerenciamento de Biblioteca</h1>
+
+        <!-- Lista de Livros -->
+        <div>
+            <h2 class="text-2xl font-semibold mb-4">Livros Disponíveis</h2>
+            <ul id="bookList" class="space-y-2">
+                {% for book in books %}
+                    <li class="bg-gray-50 p-3 rounded-md shadow-sm flex justify-between items-center">
+                        <span><strong>{{ book.title }}</strong> ({{ book.publication_year }}) - Autor: {{ book.author_name }}</span>
+                        <button onclick="deleteBook({{ book.id }})" class="text-red-500 hover:text-red-700">Excluir</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Lista de Autores -->
+        <div>
+            <h2 class="text-2xl font-semibold mb-4">Autores Disponíveis</h2>
+            <ul id="authorList" class="space-y-2">
+                {% for author in authors %}
+                    <li class="bg-gray-50 p-3 rounded-md shadow-sm flex justify-between items-center">
+                        <span><strong>{{ author.name }}</strong></span>
+                        <button onclick="deleteAuthor({{ author.id }})" class="text-red-500 hover:text-red-700">Excluir</button>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Formulário para Adicionar Livro -->
+        <div class="mb-8 p-4 border rounded-md">
+            <h2 class="text-2xl font-semibold mb-4">Adicionar Novo Livro</h2>
+            <form id="addBookForm" class="space-y-4">
+                <div>
+                    <label for="bookTitle" class="block text-sm font-medium text-gray-700">Título</label>
+                    <input type="text" id="bookTitle" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <div>
+                    <label for="bookYear" class="block text-sm font-medium text-gray-700">Ano de Publicação</label>
+                    <input type="number" id="bookYear" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="bookAuthor" class="block text-sm font-medium text-gray-700">ID do Autor</label>
+                    <input type="number" id="bookAuthor" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Adicionar Livro</button>
+            </form>
+        </div>
+
+         <!-- Formulário para Adicionar Autor -->
+        <div class="mb-8 p-4 border rounded-md">
+            <h2 class="text-2xl font-semibold mb-4">Adicionar Novo Autor</h2>
+            <form id="addAuthorForm" class="space-y-4">
+                <div>
+                    <label for="authorName" class="block text-sm font-medium text-gray-700">Nome</label>
+                    <input type="text" id="authorName" class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500" required>
+                </div>
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">Adicionar Autor</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000/api';
+
+        // Função para buscar e exibir os livros
+        async function fetchBooks() {
+            const response = await fetch(`${API_URL}/books`);
+            const books = await response.json();
+            const bookList = document.getElementById('bookList');
+            bookList.innerHTML = ''; // Limpa a lista existente
+
+            books.forEach(book => {
+                const li = document.createElement('li');
+                li.className = "bg-gray-50 p-3 rounded-md shadow-sm flex justify-between items-center";
+                li.innerHTML = `
+                    <span><strong>${book.title}</strong> (${book.publication_year}) - Autor: ${book.author_name}</span>
+                    <button onclick="deleteBook(${book.id})" class="text-red-500 hover:text-red-700">Excluir</button>
+                `;
+                bookList.appendChild(li);
+            });
+        }
+
+        // Função para buscar e exibir os autores
+        async function fetchAuthors() {
+            const response = await fetch(`${API_URL}/authors`);
+            const authors = await response.json();
+            const authorList = document.getElementById('authorList');
+            authorList.innerHTML = ''; // Limpa a lista existente
+
+            authors.forEach(author => {
+                const li = document.createElement('li');
+                li.className = "bg-gray-50 p-3 rounded-md shadow-sm flex justify-between items-center";
+                li.innerHTML = `
+                    <span><strong>${author.name}</strong></span>
+                    <button onclick="deleteAuthor(${author.id})" class="text-red-500 hover:text-red-700">Excluir</button>
+                `;
+                authorList.appendChild(li);
+            });
+        }
+
+        // Função para adicionar um novo livro
+        document.getElementById('addBookForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const title = document.getElementById('bookTitle').value;
+            const year = document.getElementById('bookYear').value;
+            const authorId = document.getElementById('bookAuthor').value;
+
+            const response = await fetch(`${API_URL}/books`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: title,
+                    publication_year: parseInt(year),
+                    author_id: parseInt(authorId)
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById('addBookForm').reset();
+                fetchBooks(); // Atualiza a lista
+            } else {
+                alert('Erro ao adicionar livro. Verifique os dados e o ID do autor.');
+            }
+        });
+
+        // Função para adicionar um novo autor
+        document.getElementById('addAuthorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('authorName').value;
+
+            const response = await fetch(`${API_URL}/authors`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name
+                })
+            });
+
+            if (response.ok) {
+                document.getElementById('addAuthorForm').reset();
+                fetchAuthors(); // Atualiza a lista
+            } else {
+                alert('Erro ao adicionar autor. Verifique os dados.');
+            }
+        });
+
+        // Função para deletar um livro
+        async function deleteBook(id) {
+            const response = await fetch(`${API_URL}/books/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                fetchBooks(); // Atualiza a lista
+            } else {
+                alert('Erro ao excluir livro.');
+            }
+        }
+
+        // Função para deletar um autor
+        async function deleteAuthor(id) {
+            const response = await fetch(`${API_URL}/authors/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                fetchAuthors(); // Atualiza a lista
+            } else {
+                alert('Erro ao excluir autor.');
+            }
+        }
+
+        // Carrega a lista de livros e autores ao carregar a página
+        fetchBooks();
+        fetchAuthors();
+    </script>
+</body>
+</html>
